@@ -69,7 +69,7 @@ jobs:
                     ["GITHUB_ACTIONS_CONFIG_FILE"]="actionlint.yml"
                     ["GITHUB_ACTIONS_COMMAND_ARGS"]="null"
                     ["GITHUB_CUSTOM_API_URL"]="https://api.${GITHUB_DOMAIN}"
-                    ["GITHUB_CUSTOM_SERVER_URL"]="https://${GITHUB_DOMAIN}""
+                    ["GITHUB_CUSTOM_SERVER_URL"]="https://${GITHUB_DOMAIN}"
                     ["GITHUB_DOMAIN"]="github.com"
                     ["GITLEAKS_CONFIG_FILE"]=".gitleaks.toml"
                     ["IGNORE_GENERATED_FILES"]="false"
