@@ -103,8 +103,6 @@ jobs:
                     ["SCALAFMT_CONFIG_FILE"]=".scalafmt.conf"
                     ["SNAKEMAKE_SNAKEFMT_CONFIG_FILE"]=".snakefmt.toml"
                     ["SSL_CERT_SECRET"]="none"
-                    ["SSH_KEY"]="none"
-                    ["SSH_SETUP_GITHUB"]="false"
                     ["SSH_INSECURE_NO_VERIFY_GITHUB_KEY"]="false"
                     ["SQL_CONFIG_FILE"]=".sql-config.json"
                     ["SQLFLUFF_CONFIG_FILE"]="/.sqlfluff"
@@ -284,8 +282,6 @@ jobs:
                     SCALAFMT_CONFIG_FILE: ${{ env.SCALAFMT_CONFIG_FILE }}
                     SNAKEMAKE_SNAKEFMT_CONFIG_FILE: ${{ env.SNAKEMAKE_SNAKEFMT_CONFIG_FILE }}
                     SSL_CERT_SECRET: ${{ env.SSL_CERT_SECRET }}
-                    SSH_KEY: ${{ env.SSH_KEY }}
-                    SSH_SETUP_GITHUB: ${{ env.SSH_SETUP_GITHUB }}
                     SSH_INSECURE_NO_VERIFY_GITHUB_KEY: ${{ env.SSH_INSECURE_NO_VERIFY_GITHUB_KEY }}
                     SQL_CONFIG_FILE: ${{ env.SQL_CONFIG_FILE }}
                     SQLFLUFF_CONFIG_FILE: ${{ env.SQLFLUFF_CONFIG_FILE }}
