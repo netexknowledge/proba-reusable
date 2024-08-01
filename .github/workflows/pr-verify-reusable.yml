@@ -27,17 +27,359 @@ jobs:
                 # super-linter needs the full git history to get the
                 # list of files that changed across commits
                     fetch-depth: 0
+
+            - 
+                name: Parse JSON and set environment variables
+                id: parse_json
+                run: |
+                    if [ -f ".github/linter.json" ]; then
+                        CONFIG=$(cat .github/pr-verify-linter.json)
+                    else
+                        CONFIG="{}"
+                    fi
+        
+                    # Valores por defecto
+                    declare -A default_vars
+                    default_vars=(
+                    ["FILTER_REGEX_INCLUDE"]=".*code/.*"
+                    ["VALIDATE_GITHUB_ACTIONS"]="false"
+                    ["VALIDATE_CHECKOV"]="false"
+                    ["VALIDATE_KUBERNETES_KUBECONFORM"]="false"
+                    ["VALIDATE_MARKDOWN"]="false"
+                    ["VALIDATE_OPENAPI"]="false"
+
+                    ["Environment"]="variable"
+                    ["ANSIBLE_CONFIG_FILE"]=".ansible-lint.yml"
+                    ["ANSIBLE_DIRECTORY"]="/ansible"
+                    ["BASH_EXEC_IGNORE_LIBRARIES"]="false"
+                    ["BASH_FILE_NAME"]=".shellcheckrc"
+                    ["BASH_SEVERITY"]="Shellcheck"
+                    ["CHECKOV_FILE_NAME"]=".checkov.yaml"
+                    ["CLANG_FORMAT_FILE_NAME"]=".clang-format"
+                    ["CREATE_LOG_FILE"]="false"
+                    ["CSS_FILE_NAME"]=".stylelintrc.json"
+                    ["DEFAULT_BRANCH"]="Default"
+                    ["DEFAULT_WORKSPACE"]="/tmp/lint"
+                    ["DISABLE_ERRORS"]="false"
+                    ["DOCKERFILE_HADOLINT_FILE_NAME"]=".hadolint.yaml"
+                    ["EDITORCONFIG_FILE_NAME"]=".ecrc"
+                    ["ENABLE_GITHUB_ACTIONS_GROUP_TITLE"]="false"
+                    ["ENABLE_GITHUB_ACTIONS_STEP_SUMMARY"]="false"
+                    ["FILTER_REGEX_EXCLUDE"]="not"
+                    ["GITHUB_ACTIONS_CONFIG_FILE"]="actionlint.yml"
+                    ["GITHUB_ACTIONS_COMMAND_ARGS"]="null"
+                    ["GITHUB_CUSTOM_API_URL"]="https://api.${GITHUB_DOMAIN}"
+                    ["GITHUB_CUSTOM_SERVER_URL"]="https://${GITHUB_DOMAIN}""
+                    ["GITHUB_DOMAIN"]="github.com"
+                    ["GITLEAKS_CONFIG_FILE"]=".gitleaks.toml"
+                    ["IGNORE_GENERATED_FILES"]="false"
+                    ["IGNORE_GITIGNORED_FILES"]="false"
+                    ["JAVA_FILE_NAME"]="sun_checks.xml"
+                    ["JAVASCRIPT_ES_CONFIG_FILE"]=".eslintrc.yml"
+                    ["JSCPD_CONFIG_FILE"]=".jscpd.json"
+                    ["KUBERNETES_KUBECONFORM_OPTIONS"]="null"
+                    ["LINTER_RULES_PATH"]=".github/linters"
+                    ["LOG_FILE"]="super-linter.log"
+                    ["LOG_LEVEL"]="INFO"
+                    ["MARKDOWN_CONFIG_FILE"]=".markdown-lint.yml"
+                    ["MARKDOWN_CUSTOM_RULE_GLOBS"]="not"
+                    ["MULTI_STATUS"]="true"
+                    ["NATURAL_LANGUAGE_CONFIG_FILE"]=".textlintrc"
+                    ["PERL_PERLCRITIC_OPTIONS"]="null"
+                    ["POWERSHELL_CONFIG_FILE"]=".powershell-psscriptanalyzer.psd1"
+                    ["PHP_CONFIG_FILE"]="php.ini"
+                    ["PHP_PHPCS_FILE_NAME"]="phpcs.xml"
+                    ["PHP_PHPSTAN_CONFIG_FILE"]="phpstan.neon"
+                    ["PROTOBUF_CONFIG_FILE"]=".protolintrc.yml"
+                    ["PYTHON_BLACK_CONFIG_FILE"]=".python-black"
+                    ["PYTHON_FLAKE8_CONFIG_FILE"]=".flake8"
+                    ["PYTHON_ISORT_CONFIG_FILE"]=".isort.cfg"
+                    ["PYTHON_MYPY_CONFIG_FILE"]=".mypy.ini"
+                    ["PYTHON_PYLINT_CONFIG_FILE"]=".python-lint"
+                    ["PYTHON_RUFF_CONFIG_FILE"]=".ruff.toml"
+                    ["RENOVATE_SHAREABLE_CONFIG_PRESET_FILE_NAMES"]="not"
+                    ["RUBY_CONFIG_FILE"]=".ruby-lint.yml"
+                    ["SAVE_SUPER_LINTER_SUMMARY"]="false"
+                    ["SCALAFMT_CONFIG_FILE"]=".scalafmt.conf"
+                    ["SNAKEMAKE_SNAKEFMT_CONFIG_FILE"]=".snakefmt.toml"
+                    ["SSL_CERT_SECRET"]="none"
+                    ["SSH_KEY"]="none"
+                    ["SSH_SETUP_GITHUB"]="false"
+                    ["SSH_INSECURE_NO_VERIFY_GITHUB_KEY"]="false"
+                    ["SQL_CONFIG_FILE"]=".sql-config.json"
+                    ["SQLFLUFF_CONFIG_FILE"]="/.sqlfluff"
+                    ["SUPER_LINTER_OUTPUT_DIRECTORY_NAME"]="super-linter-output"
+                    ["SUPER_LINTER_SUMMARY_FILE_NAME"]="super-linter-summary.md"
+                    ["SUPPRESS_FILE_TYPE_WARN"]="false"
+                    ["SUPPRESS_POSSUM"]="false"
+                    ["TERRAFORM_TERRASCAN_CONFIG_FILE"]="terrascan.toml"
+                    ["TERRAFORM_TFLINT_CONFIG_FILE"]=".tflint.hcl"
+                    ["TYPESCRIPT_ES_CONFIG_FILE"]=".eslintrc.yml"
+                    ["TYPESCRIPT_STANDARD_TSCONFIG_FILE"]="${DEFAULT_WORKSPACE}/tsconfig.json"
+                    ["USE_FIND_ALGORITHM"]="false"
+                    ["VALIDATE_ALL_CODEBASE"]="true"
+                    ["VALIDATE_ANSIBLE"]="true"
+                    ["VALIDATE_ARM"]="true"
+                    ["VALIDATE_BASH"]="true"
+                    ["VALIDATE_BASH_EXEC"]="true"
+                    ["VALIDATE_CPP"]="true"
+                    ["VALIDATE_CLANG_FORMAT"]="true"
+                    ["VALIDATE_CLOJURE"]="true"
+                    ["VALIDATE_CLOUDFORMATION"]="true"
+                    ["VALIDATE_COFFEESCRIPT"]="true"
+                    ["VALIDATE_CSHARP"]="true"
+                    ["VALIDATE_CSS"]="true"
+                    ["VALIDATE_DART"]="true"
+                    ["VALIDATE_DOCKERFILE_HADOLINT"]="true"
+                    ["VALIDATE_EDITORCONFIG"]="true"
+                    ["VALIDATE_ENV"]="true"
+                    ["VALIDATE_GHERKIN"]="true"
+                    ["VALIDATE_GITLEAKS"]="true"
+                    ["VALIDATE_GO"]="true"
+                    ["VALIDATE_GO_MODULES"]="true"
+                    ["VALIDATE_GO_RELEASER"]="true"
+                    ["VALIDATE_GOOGLE_JAVA_FORMAT"]="true"
+                    ["VALIDATE_GROOVY"]="true"
+                    ["VALIDATE_HTML"]="true"
+                    ["VALIDATE_JAVA"]="true"
+                    ["VALIDATE_JAVASCRIPT_ES"]="true"
+                    ["VALIDATE_JAVASCRIPT_PRETTIER"]="true"
+                    ["VALIDATE_JAVASCRIPT_STANDARD"]="true"
+                    ["VALIDATE_JSCPD"]="true"
+                    ["VALIDATE_JSON"]="true"
+                    ["VALIDATE_JSONC"]="true"
+                    ["VALIDATE_JSX"]="true"
+                    ["VALIDATE_KOTLIN"]="true"
+                    ["VALIDATE_LATEX"]="true"
+                    ["VALIDATE_LUA"]="true"
+                    ["VALIDATE_NATURAL_LANGUAGE"]="true"
+                    ["VALIDATE_PERL"]="true"
+                    ["VALIDATE_PHP"]="true"
+                    ["VALIDATE_PHP_BUILTIN"]="true"
+                    ["VALIDATE_PHP_PHPCS"]="true"
+                    ["VALIDATE_PHP_PHPSTAN"]="true"
+                    ["VALIDATE_PHP_PSALM"]="true"
+                    ["VALIDATE_POWERSHELL"]="true"
+                    ["VALIDATE_PROTOBUF"]="true"
+                    ["VALIDATE_PYTHON"]="true"
+                    ["VALIDATE_PYTHON_BLACK"]="true"
+                    ["VALIDATE_PYTHON_FLAKE8"]="true"
+                    ["VALIDATE_PYTHON_ISORT"]="true"
+                    ["VALIDATE_PYTHON_MYPY"]="true"
+                    ["VALIDATE_PYTHON_PYLINT"]="true"
+                    ["VALIDATE_PYTHON_RUFF"]="true"
+                    ["VALIDATE_R"]="true"
+                    ["VALIDATE_RAKU"]="true"
+                    ["VALIDATE_RENOVATE"]="true"
+                    ["VALIDATE_RUBY"]="true"
+                    ["VALIDATE_RUST_2015"]="true"
+                    ["VALIDATE_RUST_2018"]="true"
+                    ["VALIDATE_RUST_2021"]="true"
+                    ["VALIDATE_RUST_CLIPPY"]="true"
+                    ["VALIDATE_SCALAFMT"]="true"
+                    ["VALIDATE_SHELL_SHFMT"]="true"
+                    ["VALIDATE_SNAKEMAKE_LINT"]="true"
+                    ["VALIDATE_SNAKEMAKE_SNAKEFMT"]="true"
+                    ["VALIDATE_STATES"]="true"
+                    ["VALIDATE_SQL"]="true"
+                    ["VALIDATE_SQLFLUFF"]="true"
+                    ["VALIDATE_TEKTON"]="true"
+                    ["VALIDATE_TERRAFORM_FMT"]="true"
+                    ["VALIDATE_TERRAFORM_TERRASCAN"]="true"
+                    ["VALIDATE_TERRAFORM_TFLINT"]="true"
+                    ["VALIDATE_TERRAGRUNT"]="true"
+                    ["VALIDATE_TSX"]="true"
+                    ["VALIDATE_TYPESCRIPT_ES"]="true"
+                    ["VALIDATE_TYPESCRIPT_PRETTIER"]="true"
+                    ["VALIDATE_TYPESCRIPT_STANDARD"]="true"
+                    ["VALIDATE_XML"]="true"
+                    ["VALIDATE_YAML"]="true"
+                    ["YAML_CONFIG_FILE"]=".yaml-lint.yml"
+                    ["YAML_ERROR_ON_WARNING"]="false"
+                    )
+        
+                    # Parsear JSON y establecer variables de entorno
+                    for key in $(echo $CONFIG | jq -r 'keys[]'); do
+                        value=$(echo $CONFIG | jq -r --arg key "$key" '.[$key]')
+                        echo "$key=$value" >> $GITHUB_ENV
+                        default_vars[$key]=$value
+                    done
+        
+                    # Establecer valores por defecto si no están en el JSON
+                    for key in "${!default_vars[@]}"; do
+                    if [[ -z "${!key}" ]]; then
+                        echo "$key=${default_vars[$key]}" >> $GITHUB_ENV
+                    fi
+                    done
+        
+            -
+                name: Show environment variables
+                run: |
+                    for key in "${!default_vars[@]}"; do
+                    echo "$key=${!key}"
+                    done
+
+
             - # https://github.com/marketplace/actions/super-linter
                 name: Super-Linter
                 uses: super-linter/super-linter/slim@v6.7.0
                 continue-on-error: true
                 env:
                     GITHUB_TOKEN: ${{ github.token }} ## In documentation apear like that
-                    FILTER_REGEX_INCLUDE: .*code/.* # Only lint in code folder
-                    ENABLE_GITHUB_ACTIONS_STEP_SUMMARY: true
-                    VALIDATE_GITHUB_ACTIONS: false
-                    VALIDATE_CHECKOV: false
-                    VALIDATE_KUBERNETES_KUBECONFORM: false
+                    ANSIBLE_CONFIG_FILE: ${{ env.ANSIBLE_CONFIG_FILE }}
+                    ANSIBLE_DIRECTORY: ${{ env.ANSIBLE_DIRECTORY }}
+                    BASH_EXEC_IGNORE_LIBRARIES: ${{ env.BASH_EXEC_IGNORE_LIBRARIES }}
+                    BASH_FILE_NAME: ${{ env.BASH_FILE_NAME }}
+                    BASH_SEVERITY: ${{ env.BASH_SEVERITY }}
+                    CHECKOV_FILE_NAME: ${{ env.CHECKOV_FILE_NAME }}
+                    CLANG_FORMAT_FILE_NAME: ${{ env.CLANG_FORMAT_FILE_NAME }}
+                    CREATE_LOG_FILE: ${{ env.CREATE_LOG_FILE }}
+                    CSS_FILE_NAME: ${{ env.CSS_FILE_NAME }}
+                    DEFAULT_BRANCH: ${{ env.DEFAULT_BRANCH }}
+                    DEFAULT_WORKSPACE: ${{ env.DEFAULT_WORKSPACE }}
+                    DISABLE_ERRORS: ${{ env.DISABLE_ERRORS }}
+                    DOCKERFILE_HADOLINT_FILE_NAME: ${{ env.DOCKERFILE_HADOLINT_FILE_NAME }}
+                    EDITORCONFIG_FILE_NAME: ${{ env.EDITORCONFIG_FILE_NAME }}
+                    ENABLE_GITHUB_ACTIONS_GROUP_TITLE: ${{ env.ENABLE_GITHUB_ACTIONS_GROUP_TITLE }}
+                    ENABLE_GITHUB_ACTIONS_STEP_SUMMARY: ${{ env.ENABLE_GITHUB_ACTIONS_STEP_SUMMARY }}
+                    FILTER_REGEX_EXCLUDE: ${{ env.FILTER_REGEX_EXCLUDE }}
+                    FILTER_REGEX_INCLUDE: ${{ env.FILTER_REGEX_INCLUDE }}
+                    GITHUB_ACTIONS_CONFIG_FILE: ${{ env.GITHUB_ACTIONS_CONFIG_FILE }}
+                    GITHUB_ACTIONS_COMMAND_ARGS: ${{ env.GITHUB_ACTIONS_COMMAND_ARGS }}
+                    GITHUB_CUSTOM_API_URL: ${{ env.GITHUB_CUSTOM_API_URL }}
+                    GITHUB_CUSTOM_SERVER_URL: ${{ env.GITHUB_CUSTOM_SERVER_URL }}
+                    GITHUB_DOMAIN: ${{ env.GITHUB_DOMAIN }}
+                    GITLEAKS_CONFIG_FILE: ${{ env.GITLEAKS_CONFIG_FILE }}
+                    IGNORE_GENERATED_FILES: ${{ env.IGNORE_GENERATED_FILES }}
+                    IGNORE_GITIGNORED_FILES: ${{ env.IGNORE_GITIGNORED_FILES }}
+                    JAVA_FILE_NAME: ${{ env.JAVA_FILE_NAME }}
+                    JAVASCRIPT_ES_CONFIG_FILE: ${{ env.JAVASCRIPT_ES_CONFIG_FILE }}
+                    JSCPD_CONFIG_FILE: ${{ env.JSCPD_CONFIG_FILE }}
+                    KUBERNETES_KUBECONFORM_OPTIONS: ${{ env.KUBERNETES_KUBECONFORM_OPTIONS }}
+                    LINTER_RULES_PATH: ${{ env.LINTER_RULES_PATH }}
+                    LOG_FILE: ${{ env.LOG_FILE }}
+                    LOG_LEVEL: ${{ env.LOG_LEVEL }}
+                    MARKDOWN_CONFIG_FILE: ${{ env.MARKDOWN_CONFIG_FILE }}
+                    MARKDOWN_CUSTOM_RULE_GLOBS: ${{ env.MARKDOWN_CUSTOM_RULE_GLOBS }}
+                    MULTI_STATUS: ${{ env.MULTI_STATUS }}
+                    NATURAL_LANGUAGE_CONFIG_FILE: ${{ env.NATURAL_LANGUAGE_CONFIG_FILE }}
+                    PERL_PERLCRITIC_OPTIONS: ${{ env.PERL_PERLCRITIC_OPTIONS }}
+                    POWERSHELL_CONFIG_FILE: ${{ env.POWERSHELL_CONFIG_FILE }}
+                    PHP_CONFIG_FILE: ${{ env.PHP_CONFIG_FILE }}
+                    PHP_PHPCS_FILE_NAME: ${{ env.PHP_PHPCS_FILE_NAME }}
+                    PHP_PHPSTAN_CONFIG_FILE: ${{ env.PHP_PHPSTAN_CONFIG_FILE }}
+                    PROTOBUF_CONFIG_FILE: ${{ env.PROTOBUF_CONFIG_FILE }}
+                    PYTHON_BLACK_CONFIG_FILE: ${{ env.PYTHON_BLACK_CONFIG_FILE }}
+                    PYTHON_FLAKE8_CONFIG_FILE: ${{ env.PYTHON_FLAKE8_CONFIG_FILE }}
+                    PYTHON_ISORT_CONFIG_FILE: ${{ env.PYTHON_ISORT_CONFIG_FILE }}
+                    PYTHON_MYPY_CONFIG_FILE: ${{ env.PYTHON_MYPY_CONFIG_FILE }}
+                    PYTHON_PYLINT_CONFIG_FILE: ${{ env.PYTHON_PYLINT_CONFIG_FILE }}
+                    PYTHON_RUFF_CONFIG_FILE: ${{ env.PYTHON_RUFF_CONFIG_FILE }}
+                    RENOVATE_SHAREABLE_CONFIG_PRESET_FILE_NAMES: ${{ env.RENOVATE_SHAREABLE_CONFIG_PRESET_FILE_NAMES }}
+                    RUBY_CONFIG_FILE: ${{ env.RUBY_CONFIG_FILE }}
+                    SAVE_SUPER_LINTER_OUTPUT: ${{ env.SAVE_SUPER_LINTER_OUTPUT }}
+                    SAVE_SUPER_LINTER_SUMMARY: ${{ env.SAVE_SUPER_LINTER_SUMMARY }}
+                    SCALAFMT_CONFIG_FILE: ${{ env.SCALAFMT_CONFIG_FILE }}
+                    SNAKEMAKE_SNAKEFMT_CONFIG_FILE: ${{ env.SNAKEMAKE_SNAKEFMT_CONFIG_FILE }}
+                    SSL_CERT_SECRET: ${{ env.SSL_CERT_SECRET }}
+                    SSH_KEY: ${{ env.SSH_KEY }}
+                    SSH_SETUP_GITHUB: ${{ env.SSH_SETUP_GITHUB }}
+                    SSH_INSECURE_NO_VERIFY_GITHUB_KEY: ${{ env.SSH_INSECURE_NO_VERIFY_GITHUB_KEY }}
+                    SQL_CONFIG_FILE: ${{ env.SQL_CONFIG_FILE }}
+                    SQLFLUFF_CONFIG_FILE: ${{ env.SQLFLUFF_CONFIG_FILE }}
+                    SUPER_LINTER_OUTPUT_DIRECTORY_NAME: ${{ env.SUPER_LINTER_OUTPUT_DIRECTORY_NAME }}
+                    SUPER_LINTER_SUMMARY_FILE_NAME: ${{ env.SUPER_LINTER_SUMMARY_FILE_NAME }}
+                    SUPPRESS_FILE_TYPE_WARN: ${{ env.SUPPRESS_FILE_TYPE_WARN }}
+                    SUPPRESS_POSSUM: ${{ env.SUPPRESS_POSSUM }}
+                    TERRAFORM_TERRASCAN_CONFIG_FILE: ${{ env.TERRAFORM_TERRASCAN_CONFIG_FILE }}
+                    TERRAFORM_TFLINT_CONFIG_FILE: ${{ env.TERRAFORM_TFLINT_CONFIG_FILE }}
+                    TYPESCRIPT_ES_CONFIG_FILE: ${{ env.TYPESCRIPT_ES_CONFIG_FILE }}
+                    TYPESCRIPT_STANDARD_TSCONFIG_FILE: ${{ env.TYPESCRIPT_STANDARD_TSCONFIG_FILE }}
+                    USE_FIND_ALGORITHM: ${{ env.USE_FIND_ALGORITHM }}
+                    VALIDATE_ALL_CODEBASE: ${{ env.VALIDATE_ALL_CODEBASE }}
+                    VALIDATE_ANSIBLE: ${{ env.VALIDATE_ANSIBLE }}
+                    VALIDATE_ARM: ${{ env.VALIDATE_ARM }}
+                    VALIDATE_BASH: ${{ env.VALIDATE_BASH }}
+                    VALIDATE_BASH_EXEC: ${{ env.VALIDATE_BASH_EXEC }}
+                    VALIDATE_CPP: ${{ env.VALIDATE_CPP }}
+                    VALIDATE_CHECKOV: ${{ env.VALIDATE_CHECKOV }}
+                    VALIDATE_CLANG_FORMAT: ${{ env.VALIDATE_CLANG_FORMAT }}
+                    VALIDATE_CLOJURE: ${{ env.VALIDATE_CLOJURE }}
+                    VALIDATE_CLOUDFORMATION: ${{ env.VALIDATE_CLOUDFORMATION }}
+                    VALIDATE_COFFEESCRIPT: ${{ env.VALIDATE_COFFEESCRIPT }}
+                    VALIDATE_CSHARP: ${{ env.VALIDATE_CSHARP }}
+                    VALIDATE_CSS: ${{ env.VALIDATE_CSS }}
+                    VALIDATE_DART: ${{ env.VALIDATE_DART }}
+                    VALIDATE_DOCKERFILE_HADOLINT: ${{ env.VALIDATE_DOCKERFILE_HADOLINT }}
+                    VALIDATE_EDITORCONFIG: ${{ env.VALIDATE_EDITORCONFIG }}
+                    VALIDATE_ENV: ${{ env.VALIDATE_ENV }}
+                    VALIDATE_GHERKIN: ${{ env.VALIDATE_GHERKIN }}
+                    VALIDATE_GITHUB_ACTIONS: ${{ env.VALIDATE_GITHUB_ACTIONS }}
+                    VALIDATE_GITLEAKS: ${{ env.VALIDATE_GITLEAKS }}
+                    VALIDATE_GO: ${{ env.VALIDATE_GO }}
+                    VALIDATE_GO_MODULES: ${{ env.VALIDATE_GO_MODULES }}
+                    VALIDATE_GO_RELEASER: ${{ env.VALIDATE_GO_RELEASER }}
+                    VALIDATE_GOOGLE_JAVA_FORMAT: ${{ env.VALIDATE_GOOGLE_JAVA_FORMAT }}
+                    VALIDATE_GROOVY: ${{ env.VALIDATE_GROOVY }}
+                    VALIDATE_HTML: ${{ env.VALIDATE_HTML }}
+                    VALIDATE_JAVA: ${{ env.VALIDATE_JAVA }}
+                    VALIDATE_JAVASCRIPT_ES: ${{ env.VALIDATE_JAVASCRIPT_ES }}
+                    VALIDATE_JAVASCRIPT_PRETTIER: ${{ env.VALIDATE_JAVASCRIPT_PRETTIER }}
+                    VALIDATE_JAVASCRIPT_STANDARD: ${{ env.VALIDATE_JAVASCRIPT_STANDARD }}
+                    VALIDATE_JSCPD: ${{ env.VALIDATE_JSCPD }}
+                    VALIDATE_JSON: ${{ env.VALIDATE_JSON }}
+                    VALIDATE_JSONC: ${{ env.VALIDATE_JSONC }}
+                    VALIDATE_JSX: ${{ env.VALIDATE_JSX }}
+                    VALIDATE_KOTLIN: ${{ env.VALIDATE_KOTLIN }}
+                    VALIDATE_KUBERNETES_KUBECONFORM: ${{ env.VALIDATE_KUBERNETES_KUBECONFORM }}
+                    VALIDATE_LATEX: ${{ env.VALIDATE_LATEX }}
+                    VALIDATE_LUA: ${{ env.VALIDATE_LUA }}
+                    VALIDATE_MARKDOWN: ${{ env.VALIDATE_MARKDOWN }}
+                    VALIDATE_NATURAL_LANGUAGE: ${{ env.VALIDATE_NATURAL_LANGUAGE }}
+                    VALIDATE_OPENAPI: ${{ env.VALIDATE_OPENAPI }}
+                    VALIDATE_PERL: ${{ env.VALIDATE_PERL }}
+                    VALIDATE_PHP: ${{ env.VALIDATE_PHP }}
+                    VALIDATE_PHP_BUILTIN: ${{ env.VALIDATE_PHP_BUILTIN }}
+                    VALIDATE_PHP_PHPCS: ${{ env.VALIDATE_PHP_PHPCS }}
+                    VALIDATE_PHP_PHPSTAN: ${{ env.VALIDATE_PHP_PHPSTAN }}
+                    VALIDATE_PHP_PSALM: ${{ env.VALIDATE_PHP_PSALM }}
+                    VALIDATE_POWERSHELL: ${{ env.VALIDATE_POWERSHELL }}
+                    VALIDATE_PROTOBUF: ${{ env.VALIDATE_PROTOBUF }}
+                    VALIDATE_PYTHON: ${{ env.VALIDATE_PYTHON }}
+                    VALIDATE_PYTHON_BLACK: ${{ env.VALIDATE_PYTHON_BLACK }}
+                    VALIDATE_PYTHON_FLAKE8: ${{ env.VALIDATE_PYTHON_FLAKE8 }}
+                    VALIDATE_PYTHON_ISORT: ${{ env.VALIDATE_PYTHON_ISORT }}
+                    VALIDATE_PYTHON_MYPY: ${{ env.VALIDATE_PYTHON_MYPY }}
+                    VALIDATE_PYTHON_PYLINT: ${{ env.VALIDATE_PYTHON_PYLINT }}
+                    VALIDATE_PYTHON_RUFF: ${{ env.VALIDATE_PYTHON_RUFF }}
+                    VALIDATE_R: ${{ env.VALIDATE_R }}
+                    VALIDATE_RAKU: ${{ env.VALIDATE_RAKU }}
+                    VALIDATE_RENOVATE: ${{ env.VALIDATE_RENOVATE }}
+                    VALIDATE_RUBY: ${{ env.VALIDATE_RUBY }}
+                    VALIDATE_RUST_2015: ${{ env.VALIDATE_RUST_2015 }}
+                    VALIDATE_RUST_2018: ${{ env.VALIDATE_RUST_2018 }}
+                    VALIDATE_RUST_2021: ${{ env.VALIDATE_RUST_2021 }}
+                    VALIDATE_RUST_CLIPPY: ${{ env.VALIDATE_RUST_CLIPPY }}
+                    VALIDATE_SCALAFMT: ${{ env.VALIDATE_SCALAFMT }}
+                    VALIDATE_SHELL_SHFMT: ${{ env.VALIDATE_SHELL_SHFMT }}
+                    VALIDATE_SNAKEMAKE_LINT: ${{ env.VALIDATE_SNAKEMAKE_LINT }}
+                    VALIDATE_SNAKEMAKE_SNAKEFMT: ${{ env.VALIDATE_SNAKEMAKE_SNAKEFMT }}
+                    VALIDATE_STATES: ${{ env.VALIDATE_STATES }}
+                    VALIDATE_SQL: ${{ env.VALIDATE_SQL }}
+                    VALIDATE_SQLFLUFF: ${{ env.VALIDATE_SQLFLUFF }}
+                    VALIDATE_TEKTON: ${{ env.VALIDATE_TEKTON }}
+                    VALIDATE_TERRAFORM_FMT: ${{ env.VALIDATE_TERRAFORM_FMT }}
+                    VALIDATE_TERRAFORM_TERRASCAN: ${{ env.VALIDATE_TERRAFORM_TERRASCAN }}
+                    VALIDATE_TERRAFORM_TFLINT: ${{ env.VALIDATE_TERRAFORM_TFLINT }}
+                    VALIDATE_TERRAGRUNT: ${{ env.VALIDATE_TERRAGRUNT }}
+                    VALIDATE_TSX: ${{ env.VALIDATE_TSX }}
+                    VALIDATE_TYPESCRIPT_ES: ${{ env.VALIDATE_TYPESCRIPT_ES }}
+                    VALIDATE_TYPESCRIPT_PRETTIER: ${{ env.VALIDATE_TYPESCRIPT_PRETTIER }}
+                    VALIDATE_TYPESCRIPT_STANDARD: ${{ env.VALIDATE_TYPESCRIPT_STANDARD }}
+                    VALIDATE_XML: ${{ env.VALIDATE_XML }}
+                    VALIDATE_YAML: ${{ env.VALIDATE_YAML }}
+                    YAML_CONFIG_FILE: ${{ env.YAML_CONFIG_FILE }}
+                    YAML_ERROR_ON_WARNING: ${{ env.YAML_ERROR_ON_WARNING }}
 
 
     commitlint: # https://commitlint.js.org/guides/ci-setup.html
