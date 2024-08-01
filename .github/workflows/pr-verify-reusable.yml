@@ -66,7 +66,6 @@ jobs:
                     ["ENABLE_GITHUB_ACTIONS_STEP_SUMMARY"]="false"
                     ["FILTER_REGEX_EXCLUDE"]=""
                     ["GITHUB_ACTIONS_CONFIG_FILE"]="actionlint.yml"
-                    ["GITHUB_ACTIONS_COMMAND_ARGS"]="null"
                     ["GITHUB_CUSTOM_API_URL"]="https://api.${GITHUB_DOMAIN}"
                     ["GITHUB_CUSTOM_SERVER_URL"]="https://${GITHUB_DOMAIN}"
                     ["GITHUB_DOMAIN"]="github.com"
@@ -76,7 +75,6 @@ jobs:
                     ["JAVA_FILE_NAME"]="sun_checks.xml"
                     ["JAVASCRIPT_ES_CONFIG_FILE"]=".eslintrc.yml"
                     ["JSCPD_CONFIG_FILE"]=".jscpd.json"
-                    ["KUBERNETES_KUBECONFORM_OPTIONS"]="null"
                     ["LINTER_RULES_PATH"]=".github/linters"
                     ["LOG_FILE"]="super-linter.log"
                     ["LOG_LEVEL"]="INFO"
@@ -84,7 +82,6 @@ jobs:
                     ["MARKDOWN_CUSTOM_RULE_GLOBS"]=""
                     ["MULTI_STATUS"]="true"
                     ["NATURAL_LANGUAGE_CONFIG_FILE"]=".textlintrc"
-                    ["PERL_PERLCRITIC_OPTIONS"]="null"
                     ["POWERSHELL_CONFIG_FILE"]=".powershell-psscriptanalyzer.psd1"
                     ["PHP_CONFIG_FILE"]="php.ini"
                     ["PHP_PHPCS_FILE_NAME"]="phpcs.xml"
@@ -242,7 +239,6 @@ jobs:
                     FILTER_REGEX_EXCLUDE: ${{ env.FILTER_REGEX_EXCLUDE }}
                     FILTER_REGEX_INCLUDE: ${{ env.FILTER_REGEX_INCLUDE }}
                     GITHUB_ACTIONS_CONFIG_FILE: ${{ env.GITHUB_ACTIONS_CONFIG_FILE }}
-                    GITHUB_ACTIONS_COMMAND_ARGS: ${{ env.GITHUB_ACTIONS_COMMAND_ARGS }}
                     GITHUB_CUSTOM_API_URL: ${{ env.GITHUB_CUSTOM_API_URL }}
                     GITHUB_CUSTOM_SERVER_URL: ${{ env.GITHUB_CUSTOM_SERVER_URL }}
                     GITHUB_DOMAIN: ${{ env.GITHUB_DOMAIN }}
@@ -252,7 +248,6 @@ jobs:
                     JAVA_FILE_NAME: ${{ env.JAVA_FILE_NAME }}
                     JAVASCRIPT_ES_CONFIG_FILE: ${{ env.JAVASCRIPT_ES_CONFIG_FILE }}
                     JSCPD_CONFIG_FILE: ${{ env.JSCPD_CONFIG_FILE }}
-                    KUBERNETES_KUBECONFORM_OPTIONS: ${{ env.KUBERNETES_KUBECONFORM_OPTIONS }}
                     LINTER_RULES_PATH: ${{ env.LINTER_RULES_PATH }}
                     LOG_FILE: ${{ env.LOG_FILE }}
                     LOG_LEVEL: ${{ env.LOG_LEVEL }}
@@ -260,7 +255,6 @@ jobs:
                     MARKDOWN_CUSTOM_RULE_GLOBS: ${{ env.MARKDOWN_CUSTOM_RULE_GLOBS }}
                     MULTI_STATUS: ${{ env.MULTI_STATUS }}
                     NATURAL_LANGUAGE_CONFIG_FILE: ${{ env.NATURAL_LANGUAGE_CONFIG_FILE }}
-                    PERL_PERLCRITIC_OPTIONS: ${{ env.PERL_PERLCRITIC_OPTIONS }}
                     POWERSHELL_CONFIG_FILE: ${{ env.POWERSHELL_CONFIG_FILE }}
                     PHP_CONFIG_FILE: ${{ env.PHP_CONFIG_FILE }}
                     PHP_PHPCS_FILE_NAME: ${{ env.PHP_PHPCS_FILE_NAME }}
