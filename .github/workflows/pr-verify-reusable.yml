@@ -32,7 +32,7 @@ jobs:
                 name: Parse JSON and set environment variables
                 id: parse_json
                 run: |
-                    if [ -f ".github/linter.json" ]; then
+                    if [ -f ".github/pr-verify-linter.json" ]; then
                         CONFIG=$(cat .github/pr-verify-linter.json)
                     else
                         CONFIG="{}"
