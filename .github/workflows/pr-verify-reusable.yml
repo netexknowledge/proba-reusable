@@ -58,7 +58,6 @@ jobs:
                     ["CLANG_FORMAT_FILE_NAME"]=".clang-format"
                     ["CREATE_LOG_FILE"]="false"
                     ["CSS_FILE_NAME"]=".stylelintrc.json"
-                    ["DEFAULT_BRANCH"]="master"
                     ["DEFAULT_WORKSPACE"]="/tmp/lint"
                     ["DISABLE_ERRORS"]="false"
                     ["DOCKERFILE_HADOLINT_FILE_NAME"]=".hadolint.yaml"
@@ -103,7 +102,6 @@ jobs:
                     ["SCALAFMT_CONFIG_FILE"]=".scalafmt.conf"
                     ["SNAKEMAKE_SNAKEFMT_CONFIG_FILE"]=".snakefmt.toml"
                     ["SSL_CERT_SECRET"]="none"
-                    ["SSH_INSECURE_NO_VERIFY_GITHUB_KEY"]="false"
                     ["SQL_CONFIG_FILE"]=".sql-config.json"
                     ["SQLFLUFF_CONFIG_FILE"]="/.sqlfluff"
                     ["SUPER_LINTER_OUTPUT_DIRECTORY_NAME"]="super-linter-output"
@@ -235,7 +233,6 @@ jobs:
                     CLANG_FORMAT_FILE_NAME: ${{ env.CLANG_FORMAT_FILE_NAME }}
                     CREATE_LOG_FILE: ${{ env.CREATE_LOG_FILE }}
                     CSS_FILE_NAME: ${{ env.CSS_FILE_NAME }}
-                    DEFAULT_BRANCH: ${{ env.DEFAULT_BRANCH }}
                     DEFAULT_WORKSPACE: ${{ env.DEFAULT_WORKSPACE }}
                     DISABLE_ERRORS: ${{ env.DISABLE_ERRORS }}
                     DOCKERFILE_HADOLINT_FILE_NAME: ${{ env.DOCKERFILE_HADOLINT_FILE_NAME }}
@@ -282,7 +279,6 @@ jobs:
                     SCALAFMT_CONFIG_FILE: ${{ env.SCALAFMT_CONFIG_FILE }}
                     SNAKEMAKE_SNAKEFMT_CONFIG_FILE: ${{ env.SNAKEMAKE_SNAKEFMT_CONFIG_FILE }}
                     SSL_CERT_SECRET: ${{ env.SSL_CERT_SECRET }}
-                    SSH_INSECURE_NO_VERIFY_GITHUB_KEY: ${{ env.SSH_INSECURE_NO_VERIFY_GITHUB_KEY }}
                     SQL_CONFIG_FILE: ${{ env.SQL_CONFIG_FILE }}
                     SQLFLUFF_CONFIG_FILE: ${{ env.SQLFLUFF_CONFIG_FILE }}
                     SUPER_LINTER_OUTPUT_DIRECTORY_NAME: ${{ env.SUPER_LINTER_OUTPUT_DIRECTORY_NAME }}
