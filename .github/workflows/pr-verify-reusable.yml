@@ -226,6 +226,8 @@ jobs:
                 continue-on-error: true
                 env:
                     GITHUB_TOKEN: ${{ github.token }} ## In documentation apear like that
+                    # GITHUB_TOKEN: ${{ github.token }} ## In documentation apear like that
+                    GH_TOKEN: ${{ github.token }}
                     ANSIBLE_CONFIG_FILE: ${{ env.ANSIBLE_CONFIG_FILE }}
                     ANSIBLE_DIRECTORY: ${{ env.ANSIBLE_DIRECTORY }}
                     BASH_EXEC_IGNORE_LIBRARIES: ${{ env.BASH_EXEC_IGNORE_LIBRARIES }}
