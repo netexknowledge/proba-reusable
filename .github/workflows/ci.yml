@@ -1,0 +1,358 @@
+name: CI
+
+on:
+    release:
+      types: [prereleased, released]
+      # braches:
+
+    # pull_request:
+    #   types:
+    #     - opened
+    #   paths:
+    #     - 'code/**'
+    #   branches:
+    #     - 'main'
+    #     - 'master'
+env:
+  DELIVERY_FILE: true
+
+jobs:
+    # Identified repo type
+    terrasam-docker:
+        runs-on: netex-platform-ubuntu-latest
+        if: startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'prerelease/') || startsWith(github.head_ref, 'fix/') || startsWith(github.head_ref, 'revision/') || startsWith(github.head_ref, 'develop/') || startsWith(github.head_ref, 'feat/') || ${{ github.ref == 'refs/heads/develop' }}  || ${{ github.ref == 'refs/heads/master' }} || ${{ github.ref == 'refs/heads/main' }}
+        outputs:
+          file-type: ${{ steps.check_file.outputs.file-type }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+            
+            - name: See type of repo
+              id: check_file
+              
+              run: |
+                if [ -f "./code/Dockerfile" ]; then
+                    echo ${{ github.head_ref }}
+                    echo "It's docker repo"
+                    # echo "::set-output name=file-type::docker"
+                    echo "file-type=docker" >> $GITHUB_OUTPUT
+                elif [ -f "./code/tf-resources/terraform.tfvars" ]; then
+                    echo "It's terrasam repo"
+                    # echo "::set-output name=file-type::terrasam"
+                    echo "file-type=terrasam" >> $GITHUB_OUTPUT
+                else 
+                    echo "I don't recognize this repo type"
+                    # echo "::set-output name=file-type::unknown"
+                    echo "file-type=unknown" >> $GITHUB_OUTPUT
+                fi
+
+    # For Dockerfile repo
+    docker:
+        runs-on: netex-platform-ubuntu-latest
+        needs: terrasam-docker
+        permissions:
+          pull-requests: write
+          contents: read
+          # metadata: read
+          packages: read
+
+        if: ${{ needs.terrasam-docker.outputs.file-type == 'docker' }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Send message to Microsoft Teams
+              env:
+                TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+              run: |
+                curl -X POST -H "Content-Type: application/json" -d '{
+                  "type": "MessageCard",
+                  "themeColor": "0076D7",
+                  "title": "${{ github.workflow }}: Starting tests ${{ github.repository }}",
+                  "text": "The build by ${{ github.actor }} has started, release version ${{ github.event.release.name }} url ${{ github.event.release.html_url }} "
+                }' $TEAMS_WEBHOOK_URL
+
+            - name: Log in to Docker Hub
+              uses: docker/login-action@v3.2.0
+              with:
+                username: ${{ secrets.DOCKER_USERNAME }}
+                password: ${{ secrets.DOCKER_PASSWORD }}
+
+            - name: Set docker image name & option for publish
+              env:
+                GITHUB_TOKEN: ${{ github.token }}
+              run: |
+                DOCKER_IMAGE_NAME=${{ vars.DOCKER_IMAGE_NAME }}
+                
+                DOCKER_IMAGE_NAME=${DOCKER_IMAGE_NAME:-netexlearning/${{ github.event.repository.name }}}
+
+                TAG=$(echo ${{ github.head_ref}} | awk -F'/' '{print $NF}')
+
+                echo "DOCKER_IMAGE_NAME=$DOCKER_IMAGE_NAME" >> $GITHUB_ENV
+
+                if [ -e delivery.yml ]; then
+                  TAG=$(cat delivery.yml | yq -e .registry.dockerhub)
+                elif [ -e delivery.yaml ]; then
+                  TAG=$(cat delivery.yaml | yq -e .registry.dockerhub)
+                else
+                  DELIVERY_FILE=false
+                  echo "DELIVERY_FILE=$DELIVERY_FILE" >> $GITHUB_ENV
+                fi
+
+                echo "TAG=$TAG_DOCKERHUB" >> $GITHUB_ENV
+                
+                PUBLISH_DOCKER=${{ vars.PUBLISH_DOCKER }}
+                PUBLISH_DOCKER=${PUBLISH_DOCKER:-false}
+                echo "PUBLISH_DOCKER=$PUBLISH_DOCKER" >> $GITHUB_ENV
+
+                PR=$(gh release view ${{ github.event.release.name }} --json body | jq -re .body | grep "^PR:" | cut -d '#' -f 2)
+                echo "PR=$PR" >> $GITHUB_ENV
+            -
+              name: docker build
+              id: build
+              uses: docker/build-push-action@v6
+              env: 
+                DOCKER_BUILD_RECORD_UPLOAD: false
+              with:
+                  context: "./code/"
+                  platforms: linux/amd64
+                  push: ${{ env.PUBLISH_DOCKER }}
+                  tags: |
+                    ${{env.DOCKER_IMAGE_NAME}}:${{ github.event.release.name }}
+
+            - name: test with github
+              run: echo ${{ env.DOCKER_IMAGE_NAME }}
+            # Check with trivy and upload results
+            - name: Run Trivy vulnerability scanner
+              id: trivy
+              uses: aquasecurity/trivy-action@0.23.0
+              with:
+                image-ref: ${{ steps.build.outputs.imageid }}
+                format: 'table'
+                output: 'trivy.txt'
+                hide-progress: true
+                ignore-unfixed: false
+                vuln-type: "os,library"
+                severity: "CRITICAL,HIGH"
+
+
+            - name: Publish Trivy Output to Summary
+              run: |
+                if [[ -s trivy.txt ]]; then
+                  {
+                    echo "### Trivy Output"
+                    echo "<details><summary>Click to expand</summary>"
+                    echo ""
+                    echo '```terraform'
+                    cat trivy.txt
+                    echo '```'
+                    echo "</details>"
+                    echo ""
+                  } >> $GITHUB_STEP_SUMMARY
+                else
+                  {
+                    echo "### Trivy Output"
+                    echo ""
+                    echo "❌ Trivy tests not found!"
+                    echo ""
+                  } >> $GITHUB_STEP_SUMMARY
+                fi
+            - name: Tests
+              id: test
+              timeout-minutes: 120
+              continue-on-error: true
+              run: |
+                error_on_test="false"
+                if [ -e test.yml ]; then
+                  tests=$(cat test.yml | yq -e .unit-test.[])
+                  for test in $tests
+                  do
+                    docker run --rm ${{ steps.build.outputs.imageid }} $test >> tests.txt 2>&1
+                    if [[ $? > '0' ]]; then 
+                      error_on_test="true"
+                    fi
+                  done
+                else
+                  echo "no tests file, running default test at /netex/unit-test.sh"
+                  docker run --rm ${{ steps.build.outputs.imageid }} /netex/unit-test.sh > tests.txt 2>&1
+                  if [[ $? > '0' ]]; then 
+                    error_on_test="true"
+                  fi
+                fi
+                
+                if [[ $error_on_test == "true"]];then
+                  exit 2
+                fi
+            - name: Integration Tests
+              id: integrationTests
+              timeout-minutes: 120
+              continue-on-error: true
+              run: |
+                error_on_test="false"
+                if [ -e test.yml ]; then
+                  integration-tests=$(cat test.yml | yq -e .integration-tests.[])
+                  for test in $tests
+                  do
+                    docker run --rm ${{ steps.build.outputs.imageid }} $test >> integration-tests.txt 2>&1
+                    if [[ $? > '0' ]]; then 
+                      error_on_test="true"
+                    fi
+                  done
+                else
+                  echo "no tests file, running default test at /netex/unit-test.sh"
+                  docker run --rm ${{ steps.build.outputs.imageid }} /netex/integ-test.sh > integration-tests.txt 2>&1
+                  if [[ $? > '0' ]]; then 
+                    error_on_test="true"
+                  fi
+                fi
+                if [[ $error_on_test == "true"]];then
+                  exit 2
+                fi
+            - name: Publish Tests Output to Summary
+              run: |
+                if [[ -s tests.txt ]]; then
+                  {
+                    echo "### Tests Output"
+                    echo ""
+                    echo """Status -> $(if [ "${{ steps.test.outcome }}" == "success" ]; then echo ✅; else echo ❌; fi)"""
+                    echo "<details><summary>Click to expand</summary>"
+                    echo ""
+                    echo '```terraform'
+                    cat tests.txt
+                    echo '```'
+                    echo "</details>"
+                    echo ""
+                  } >> $GITHUB_STEP_SUMMARY
+                else
+                  {
+                    echo "### Tests Output "
+                    echo ""
+                    echo "❌ Tests not found!"
+                    echo ""
+                  } >> $GITHUB_STEP_SUMMARY
+                fi
+              
+
+            - name: Publish Integration Tests Output to Summary
+              run: |
+                  if [[ -s integration-tests.txt ]]; then
+                    {
+                      echo "### Integration Tests Output"
+                      echo ""
+                      echo """Status -> $(if [ "${{ steps.integrationTests.outcome }}" == "success" ]; then echo ✅; else echo ❌; fi)"""
+                      echo "<details><summary>Click to expand</summary>"
+                      echo ""
+                      echo '```terraform'
+                      cat integration-tests.txt
+                      echo '```'
+                      echo "</details>"
+                      echo ""
+                    } >> $GITHUB_STEP_SUMMARY
+                  else
+                    {
+                      echo "### Integration Tests Output "
+                      echo ""
+                      echo "❌ Integration Tests not found!"
+                      echo ""
+                    } >> $GITHUB_STEP_SUMMARY
+                  fi
+
+            - name: Write Actions Results in PR
+              continue-on-error: true
+              env:
+                GITHUB_TOKEN: ${{ github.token }}
+              run: |
+                echo """
+                  # CI pipeline results
+
+                  For check all steps in workflow, and had more information for docker build click [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+                  ## Docker build
+                  Status -> $(if [ "${{ steps.build.conclusion }}" == "success" ]; then echo ✅; else echo ❌; fi)
+                  
+                  """ >> mensaje.txt
+                for summary in $(ls /home/runner/_work/_temp/_runner_file_commands/step_summary_*-scrubbed)
+                do
+                  cat $summary >> mensaje.txt
+                done
+                
+                gh pr comment $PR -b "$(cat mensaje.txt)"
+
+            - name: Send endding message to Microsoft Teams
+              env:
+                TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+              run: |
+                if [ -z "$DELIVERY_FILE" ]; then
+                  data="There is no delivery.yml for set image name, you can add a delivery.yml in root with the name of your image
+                        Example content:
+                          registry:
+                            dockerhub: netexlearning/name-of-your-project"
+                else
+                  data=""
+                fi
+
+                curl -X POST -H "Content-Type: application/json" -d "{
+                  \"type\": \"MessageCard\",
+                  \"themeColor\": \"0076D7\",
+                  \"title\": \"${GITHUB_WORKFLOW}: Ended building dockerfile in ${GITHUB_REPOSITORY}\",
+                  \"text\": \"The build by ${GITHUB_ACTOR} has finished in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR \n
+                  The docker image is ${{env.DOCKER_IMAGE_NAME}}:${{ github.event.release.name }} \n
+                  The url for release is ${{ github.event.release.html_url }} \n
+                  $data\"
+                }" $TEAMS_WEBHOOK_URL
+              
+    terrasam:
+      runs-on: netex-platform-ubuntu-latest
+      needs: terrasam-docker
+      if: ${{ needs.terrasam-docker.outputs.file-type == 'terrasam' }}
+      steps:
+
+
+          - name: Send message to Microsoft Teams
+            env:
+              TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+              GITHUB_TOKEN: ${{ github.token }}
+            run: |
+              PR=$(gh release view ${{ github.event.release.name }} --json body | jq -re .body | grep "^PR:" | cut -d '#' -f 2)
+              echo "PR=$PR" >> $GITHUB_ENV
+
+              curl -X POST -H "Content-Type: application/json" -d '{
+                "type": "MessageCard",
+                "themeColor": "0076D7",
+                "title": "${{ github.workflow }}: Starting tests ${{ github.repository }}",
+                "text": "The build by ${{ github.actor }} has started, pull request ${{ github.server_url }}/${{ github.repository }}/pull/$PR"
+              }' $TEAMS_WEBHOOK_URL
+
+          - name: Create labels if not exists
+            env:
+              GITHUB_TOKEN: ${{ secrets.SA_NETEX_GITHUB_TOKEN }}
+            run: |
+              if [[ $(gh label list --repo netexknowledge/platform-ops | cut -f 1 | grep "^terrasam-${{ env.PRODUCT }}$") != "terrasam-${{ env.PRODUCT }}" ]]; then
+                gh label create "terrasam-${{ env.PRODUCT }}" --repo netexknowledge/platform-ops --color "#46923c" --description "Terrasam deployments asociate to project ${{ env.PRODUCT }}"
+              fi
+
+          - name: Create Issue
+            id: create-issue
+            run: |
+              issue_title="Terrasam CI ${{ github.repository }} ${{ github.event.release.name }}"
+              gh issue create --repo netexknowledge/platform-ops \
+                --title "$issue_title" \
+                --body "{
+                  \"repository\": \"${{ github.repository }}\",
+                  \"version\":\"${{ github.event.release.name }}\",
+                  \"branch\": \"${{ github.ref }}\",
+                  \"workflow\": \"${{ github.workflow }}\",
+                  \"author\": \"${{ github.triggering_actor }}\",
+                  \"Origin_author\": \"${{ github.actor }}\",
+                  \"execution_id\": \"${{ github.run_id }}\",
+                  \"type\": \"${{ github.event.inputs.type }}\",
+                  \"execution_id\": \"${{ github.run_id }}\",
+                  \"pr_id\": \"$PR\",
+                  \"url\": \"${{ github.server_url }}/${{ github.repository }}/pull/$PR\"
+                }" \
+                --label terrasam-${{ env.PRODUCT }} --label terrasam-ci
+                # issue_number=$(echo $issue_raw_response | cut -d / -f 7)
+                # echo "issue_number"
+                # echo "issue_number=$issue_number" >> $GITHUB_ENV
+            env:
+              GITHUB_TOKEN: ${{ secrets.SA_NETEX_GITHUB_TOKEN }}

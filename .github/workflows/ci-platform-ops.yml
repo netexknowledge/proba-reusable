@@ -1,0 +1,179 @@
+name: Terrasam Ci
+
+on:
+  issues:
+    types: [opened]
+
+# permissions: write-all
+
+jobs:
+  ci:
+    runs-on: netex-platform-ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'terrasam-ci')
+    steps:
+
+      - name: Extract issue body
+        id: extract_body
+        run: echo '${{ github.event.issue.body }}' > issue_body.json
+
+      - name: Parse JSON from issue body
+        id: parse_json
+        run: |
+          author=$(jq -r '.author' issue_body.json)
+          origin_author=$(jq -r '.Origin_author' issue_body.json)
+          execution_id=$(jq -r '.execution_id' issue_body.json)
+          repository=$(jq -r '.repository' issue_body.json)
+          branch=$(jq -r '.branch' issue_body.json)
+          pr_id=$(jq -r '.pr_id' issue_body.json)
+          workflow=$(jq -r '.workflow' issue_body.json)
+          url=$(jq -r '.url' issue_body.json)
+
+
+          echo "author=$author" >> $GITHUB_ENV
+          echo "origin_author=$origin_author" >> $GITHUB_ENV
+          echo "execution_id=$execution_id" >> $GITHUB_ENV
+          echo "pr_id=$pr_id" >> $GITHUB_ENV
+          echo "branch=$branch" >> $GITHUB_ENV
+          echo "repository=$repository" >> $GITHUB_ENV
+          echo "issue_number=${{ github.event.issue.number }}" >> $GITHUB_ENV
+          echo "workflow=$workflow" >> $GITHUB_ENV
+          echo "$url=$url" >> $GITHUB_ENV
+          
+      - name: Write Action Id in PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.SA_NETEX_GITHUB_TOKEN }}
+        run: |
+          gh pr comment -R $repository $pr_id -b "Starting CI for terrasam in gitops id ${{ github.event.workflow }}, reload in a few minutes"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.DES_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DES_AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+          
+      - name: Checkout code
+        uses: actions/checkout@v4.1.4
+        with:
+          repository: ${{ env.repository }}
+          token: ${{ secrets.SA_NETEX_GITHUB_TOKEN }}
+          ref: ${{ env.branch }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+          
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.DES_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DES_AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+          
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: hashicorp/setup-terraform@v3.1.1
+        with:
+          terraform_version: "1.2.0"
+          
+      - name: Install AWS CLI
+        run: |
+          python -m pip install --upgrade pip
+          pip install awscli
+
+      # Esta parte de aqui se ira al repositorio central de operaciones
+      - name: deploy in dryrun
+        id: dry-run
+        continue-on-error: true
+        run: | 
+          bash ./deploy.sh --dryrun > dryrun.txt 2>&1
+        working-directory: ./code/tf-resources/
+
+      - name: init resources
+        id: init
+        env: 
+          TF_LOG: plain
+        continue-on-error: true
+        run: | 
+          terraform init > terraform-init.txt 2>&1
+
+          terraform plan --out tf.plan
+        working-directory: ./code/tf-resources/
+          # terraform plan --out tf.plan
+
+      - name: Publish Terraform Plan 
+        working-directory: ./code/tf-resources/
+        run: |
+          
+          echo """
+            # CI pipeline results
+
+            ### Deploy command with dry-run
+            
+            Status -> $(if [ "${{ steps.dry-run.outcome }}" == "success" ]; then echo ✅; else echo ❌; fi)
+
+            <details><summary>Click to expand</summary>
+            
+            \`\`\`
+            $(cat dryrun.txt)
+            \`\`\`
+
+            </details>
+
+            ### Terraform init
+
+            Status -> $(if [ "${{ steps.init.outcome }}" == "success" ]; then echo ✅; else echo ❌; fi)
+
+            <details><summary>Click to expand</summary>
+            
+            \`\`\`
+            $(cat terraform-init.txt)
+            \`\`\`
+
+            </details>
+
+          """ >> $GITHUB_STEP_SUMMARY
+
+          if [[ -s tf.plan ]]; then
+            {
+              echo "### Terraform plan Output"
+              echo ""
+              terraform show -no-color tf.plan | grep "^Plan:"
+              echo ""
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```terraform'
+              terraform show -no-color tf.plan
+              echo '```'
+              echo "</details>"
+              echo ""
+            } >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Write Actions Results in PR, Issue and close issue. 
+        env:
+          GITHUB_TOKEN: ${{ secrets.SA_NETEX_GITHUB_TOKEN }}
+        run: |
+          for summary in $(ls /home/runner/_work/_temp/_runner_file_commands/step_summary_*-scrubbed)
+          do
+            cat $summary >> mensaje.txt
+          done
+          
+          gh pr comment -R $repository $pr_id --edit-last -b "$(cat mensaje.txt)"
+          gh issue close -R ${{ github.repository }} $issue_number -c "$(cat mensaje.txt)"
+
+
+      - name: Send endding message to Microsoft Teams
+        env:
+          TEAMS_WEBHOOK_URL: ${{ env.TEAMS_WEBHOOK_URL }}
+        run: |
+          curl -X POST -H "Content-Type: application/json" -d '{
+            "type": "MessageCard",
+            "themeColor": "0076D7",
+            "title": "${{ env.workflow }}: Endded building dockerfile in ${{ env.repository }}",
+            "text": "The build by ${{ env.author }} has finished in: ${{ env.url }}"
+          }' $TEAMS_WEBHOOK_URL

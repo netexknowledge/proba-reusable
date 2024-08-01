@@ -1,0 +1,87 @@
+name: PR-VERIFY-REUSABLE
+
+on:
+    workflow_call:
+        # inputs:
+        #     config-path:
+        #         required: true
+        #         type: string
+        # secrets:
+        #     envPAT:
+        #         required: true
+
+jobs:
+    code-lint:
+        runs-on: netex-platform-ubuntu-latest
+
+        permissions: write-all
+            # contents: read
+            # packages: read
+            # # To report GitHub Actions status checks
+            # statuses: write
+        steps:
+            - 
+                name: Checkout code
+                uses: actions/checkout@v4
+                with:
+                # super-linter needs the full git history to get the
+                # list of files that changed across commits
+                    fetch-depth: 0
+            - # https://github.com/marketplace/actions/super-linter
+                name: Super-Linter
+                uses: super-linter/super-linter/slim@v6.7.0
+                continue-on-error: true
+                env:
+                    GITHUB_TOKEN: ${{ github.token }} ## In documentation apear like that
+                    FILTER_REGEX_INCLUDE: .*code/.* # Only lint in code folder
+                    ENABLE_GITHUB_ACTIONS_STEP_SUMMARY: true
+                    VALIDATE_GITHUB_ACTIONS: false
+                    VALIDATE_CHECKOV: false
+                    VALIDATE_KUBERNETES_KUBECONFORM: false
+
+
+    commitlint: # https://commitlint.js.org/guides/ci-setup.html
+        runs-on: netex-platform-ubuntu-latest
+        steps:
+        - 
+            uses: actions/checkout@v4
+            with:
+                fetch-depth: 0
+        - 
+            name: Set up Node.js
+            uses: actions/setup-node@v4
+            with:
+                node-version: '16'
+                
+        - 
+            name: Cache npm dependencies
+            id: cache-npm
+            uses: actions/cache@v4
+            with:
+                path: |
+                    ~/.npm
+                    node_modules
+                key: ${{ github.workflow }}-${{ runner.os }}-npm-${{ steps.setup-node.outputs.node-version }}-${{ hashFiles('.github/workflows/pr-verify.yml') }}
+
+        - 
+            name: Install commitlint
+            if: steps.cache-npm.outputs.cache-hit != 'true'
+            run: |
+                npm install --save-dev @commitlint/{config-conventional,cli}
+
+        - 
+            name: create config file
+            run: |
+                echo """module.exports = { extends: ['@commitlint/config-conventional'] };""" > commitlint.config.js
+
+        - 
+            name: Validate current commit (last commit) with commitlint
+            continue-on-error: true
+            if: github.event_name == 'push'
+            run: npx commitlint --last --verbose
+
+        - 
+            name: Validate PR commits with commitlint
+            continue-on-error: true
+            if: github.event_name == 'pull_request'
+            run: npx commitlint --from ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }} --to ${{ github.event.pull_request.head.sha }} --verbose
