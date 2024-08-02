@@ -281,13 +281,13 @@ jobs:
         -
             name: Set variables
             run: |
-                if [[ success != "failure" ]]; then
+                if [[ ${{ needs.commitlint.outcome }} != "failure" ]]; then
                     echo "commitlint=✅" >> $GITHUB_ENV
                 else
                     echo "commitlint=❌" >> $GITHUB_ENV
                 fi
         
-                if [[ success != "failure" ]]; then
+                if [[ ${{ needs.code-lint.outcome }} != "failure" ]]; then
                     echo "code_lint=✅" >> $GITHUB_ENV
                 else
                     echo "code_lint=❌" >> $GITHUB_ENV
