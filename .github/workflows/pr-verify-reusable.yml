@@ -284,31 +284,60 @@ jobs:
         needs: [ commitlint,code-lint ]
         steps:
         -
-            name: mensaje
+            name: Set variables
             run: |
-                if [[ ${{ needs.commitlint.result }} != "failure" ]]; then
-                    commitlint="✅"
+                if [[ success != "failure" ]]; then
+                    echo "commitlint=✅" >> $GITHUB_ENV
                 else
-                    commitlint="❌"
+                    echo "commitlint=❌" >> $GITHUB_ENV
                 fi
-
-                if [[ ${{ needs.code-lint.result }} != "failure" ]]; then
-                    code-lint="✅"
+        
+                if [[ success != "failure" ]]; then
+                    echo "code_lint=✅" >> $GITHUB_ENV
                 else
-                    code-lint="❌"
+                    echo "code_lint=❌" >> $GITHUB_ENV
                 fi
-
+        
+        -
+            name: Echo results
+            run: |
                 echo """
-                  The PR-VERIFY by ${GITHUB_ACTOR} has finished in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR \n
-                  /n
-                  The commit lint result -> $commitlint /n
-                  /n
-                  The code-lint result -> $code-lint /n
-                  /n
-                  You can check results in PR -> ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR /n
-                  and in github workflow ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} /n
-                  /n
-                  """ > result.txt
+                The PR-VERIFY by ${GITHUB_ACTOR} has finished in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR \n
+                /n
+                The commit lint result -> $commitlint /n
+                /n
+                The code-lint result -> $code_lint /n
+                /n
+                You can check results in PR -> ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR /n
+                and in github workflow https://github.com/netexknowledge/pruebaruben/actions/runs/10212312039 /n
+                /n
+                """ > result.txt
+        # -
+        #     name: mensaje
+        #     run: |
+        #         if [[ ${{ needs.commitlint.result }} != "failure" ]]; then
+        #             commitlint="✅"
+        #         else
+        #             commitlint="❌"
+        #         fi
+
+        #         if [[ ${{ needs.code-lint.result }} != "failure" ]]; then
+        #             code-lint="✅"
+        #         else
+        #             code-lint="❌"
+        #         fi
+
+        #         echo """
+        #           The PR-VERIFY by ${GITHUB_ACTOR} has finished in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR \n
+        #           /n
+        #           The commit lint result -> $commitlint /n
+        #           /n
+        #           The code-lint result -> $code-lint /n
+        #           /n
+        #           You can check results in PR -> ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR /n
+        #           and in github workflow ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} /n
+        #           /n
+        #           """ > result.txt
 
         -
             name: send mensaje
