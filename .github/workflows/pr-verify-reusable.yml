@@ -17,6 +17,8 @@ permissions: #write-all
     packages: read
     # # To report GitHub Actions status checks
     statuses: write
+    # For codeql scanning
+    security-events: write
 jobs:
     code-lint:
         runs-on: netex-platform-ubuntu-latest
