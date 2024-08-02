@@ -2,6 +2,9 @@ name: PR-VERIFY-REUSABLE
 
 on:
     workflow_call:
+        secrets:
+            TEAMS_WEBHOOK_URL:
+                required: false
         # inputs:
         #     config-path:
         #         required: true
@@ -13,11 +16,11 @@ on:
 jobs:
     code-lint:
         runs-on: netex-platform-ubuntu-latest
-        permissions: write-all
-        #   contents: read
-        #   packages: read
-        #   # # To report GitHub Actions status checks
-        #   statuses: write
+        permissions: #write-all
+          contents: read
+          packages: read
+          # # To report GitHub Actions status checks
+          statuses: write
 
         steps:
             - 
