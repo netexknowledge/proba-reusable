@@ -307,14 +307,14 @@ jobs:
                   \"themeColor\": \"0076D7\",
                   \"title\": \"${GITHUB_WORKFLOW}: Ended in ${GITHUB_REPOSITORY}\",
                   \"text\": \"
-                The PR-VERIFY by ${GITHUB_ACTOR} has finished in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR \n
+                The PR-VERIFY by ${GITHUB_ACTOR} has finished in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/${{ github.event.number }} \n
                 \n
                 The commit lint result -> $commitlint \n
                 \n
                 The code-lint result -> $code_lint \n
                 \n
-                You can check results in PR -> ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR \n
-                and in github workflow ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.run_number }} \n
+                You can check results in PR -> ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/${{ github.event.number }} \n
+                and in github workflow ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.run_id }} \n
                 \n
                 \"
                 }" $TEAMS_WEBHOOK_URL
