@@ -78,7 +78,6 @@ jobs:
             - # https://github.com/marketplace/actions/super-linter
                 name: Super-Linter
                 uses: super-linter/super-linter/slim@v6.7.0
-                continue-on-error: true
                 env:
                     GITHUB_TOKEN: ${{ github.token }} ## In documentation apear like that
                     # GITHUB_TOKEN: ${{ github.token }} ## In documentation apear like that
@@ -268,14 +267,12 @@ jobs:
 
         - 
             name: Validate current commit (last commit) with commitlint
-            continue-on-error: true
             if: github.event_name == 'push'
             run: npx commitlint --last --verbose
 
         - 
             name: Validate PR commits with commitlint
             id: pr-verify
-            continue-on-error: true
             if: github.event_name == 'pull_request'
             run: npx commitlint --from ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
@@ -302,14 +299,14 @@ jobs:
             name: Echo results
             run: |
                 echo """
-                The PR-VERIFY by ${GITHUB_ACTOR} has finished in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR \n
+                The PR-VERIFY by ${GITHUB_ACTOR} has finished in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/${{ github.event.number }} \n
                 /n
                 The commit lint result -> $commitlint /n
                 /n
                 The code-lint result -> $code_lint /n
                 /n
-                You can check results in PR -> ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR /n
-                and in github workflow https://github.com/netexknowledge/pruebaruben/actions/runs/10212312039 /n
+                You can check results in PR -> ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/${{ github.event.number }} /n
+                and in github workflow ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.run_number }} /n
                 /n
                 """ > result.txt
         # -
@@ -349,5 +346,15 @@ jobs:
                   \"type\": \"MessageCard\",
                   \"themeColor\": \"0076D7\",
                   \"title\": \"${GITHUB_WORKFLOW}: Ended in ${GITHUB_REPOSITORY}\",
-                  \"text\": \"$(cat result.txt)\"
+                  \"text\": \"
+                The PR-VERIFY by ${GITHUB_ACTOR} has finished in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR \n
+                /n
+                The commit lint result -> $commitlint /n
+                /n
+                The code-lint result -> $code_lint /n
+                /n
+                You can check results in PR -> ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR /n
+                and in github workflow https://github.com/netexknowledge/pruebaruben/actions/runs/10212312039 /n
+                /n
+                \"
                 }" $TEAMS_WEBHOOK_URL
