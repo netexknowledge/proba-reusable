@@ -368,8 +368,8 @@ jobs:
         - 
             uses: github/codeql-action/init@v3
             with:
-                db-location: '${{ github.runner_temp }}/${{ github.event_name }}'
-                path: code
+                db-location: '/tmp/${{ github.event_name }}'
+                # path: code
 
 
 
