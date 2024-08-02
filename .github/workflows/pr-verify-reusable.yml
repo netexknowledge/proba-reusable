@@ -295,46 +295,6 @@ jobs:
                     echo "code_lint=❌" >> $GITHUB_ENV
                 fi
         
-        -
-            name: Echo results
-            run: |
-                echo """
-                The PR-VERIFY by ${GITHUB_ACTOR} has finished in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/${{ github.event.number }} \n
-                /n
-                The commit lint result -> $commitlint /n
-                /n
-                The code-lint result -> $code_lint /n
-                /n
-                You can check results in PR -> ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/${{ github.event.number }} /n
-                and in github workflow ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.run_number }} /n
-                /n
-                """ > result.txt
-        # -
-        #     name: mensaje
-        #     run: |
-        #         if [[ ${{ needs.commitlint.result }} != "failure" ]]; then
-        #             commitlint="✅"
-        #         else
-        #             commitlint="❌"
-        #         fi
-
-        #         if [[ ${{ needs.code-lint.result }} != "failure" ]]; then
-        #             code-lint="✅"
-        #         else
-        #             code-lint="❌"
-        #         fi
-
-        #         echo """
-        #           The PR-VERIFY by ${GITHUB_ACTOR} has finished in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR \n
-        #           /n
-        #           The commit lint result -> $commitlint /n
-        #           /n
-        #           The code-lint result -> $code-lint /n
-        #           /n
-        #           You can check results in PR -> ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR /n
-        #           and in github workflow ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} /n
-        #           /n
-        #           """ > result.txt
 
         -
             name: send mensaje
@@ -348,14 +308,14 @@ jobs:
                   \"title\": \"${GITHUB_WORKFLOW}: Ended in ${GITHUB_REPOSITORY}\",
                   \"text\": \"
                 The PR-VERIFY by ${GITHUB_ACTOR} has finished in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR \n
-                /n
-                The commit lint result -> $commitlint /n
-                /n
-                The code-lint result -> $code_lint /n
-                /n
-                You can check results in PR -> ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR /n
-                and in github workflow https://github.com/netexknowledge/pruebaruben/actions/runs/10212312039 /n
-                /n
+                \n
+                The commit lint result -> $commitlint \n
+                \n
+                The code-lint result -> $code_lint \n
+                \n
+                You can check results in PR -> ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$PR \n
+                and in github workflow ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.run_number }} \n
+                \n
                 \"
                 }" $TEAMS_WEBHOOK_URL
 
@@ -365,8 +325,7 @@ jobs:
         - 
             name: Checkout code
             uses: actions/checkout@v4
-            with:
-                fetch-depth: 0
+
         - 
             uses: github/codeql-action/init@v3
             with:
