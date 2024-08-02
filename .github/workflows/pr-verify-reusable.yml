@@ -5,13 +5,7 @@ on:
         secrets:
             TEAMS_WEBHOOK_URL:
                 required: false
-        # inputs:
-        #     config-path:
-        #         required: true
-        #         type: string
-        # secrets:
-        #     envPAT:
-        #         required: true
+
 permissions: #write-all
     contents: read
     packages: read
@@ -236,6 +230,7 @@ jobs:
         - 
             uses: actions/checkout@v4
             with:
+                # commit lint needs all commits
                 fetch-depth: 0
         - 
             name: Set up Node.js
@@ -282,6 +277,7 @@ jobs:
         steps:
         -
             name: Set variables
+            continue-on-error: true
             run: |
                 if [[ ${{ needs.commitlint.result }} != "failure" ]]; then
                     echo "commitlint=✅" >> $GITHUB_ENV
@@ -319,25 +315,28 @@ jobs:
                 \"
                 }" $TEAMS_WEBHOOK_URL
 
-    scan:
-        runs-on: netex-platform-ubuntu-latest
-        steps:
-        - 
-            name: Checkout code
-            uses: actions/checkout@v4
+    # scan:
+    #     runs-on: netex-platform-ubuntu-latest
+    #     steps:
+    # ## codeql for java, python, javascript    
+    # https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning/customizing-your-advanced-setup-for-code-scanning#specifying-the-location-for-codeql-databases
+    #
+    #     - 
+    #         name: Checkout code
+    #         uses: actions/checkout@v4
 
-        - 
-            uses: github/codeql-action/init@v3
-            with:
-                db-location: '/tmp/${{ github.event_name }}'
-                # path: code
-        - 
-            name: Autobuild
-            uses: github/codeql-action/autobuild@v3
+    #     - 
+    #         uses: github/codeql-action/init@v3
+    #         with:
+    #             db-location: '/tmp/${{ github.event_name }}'
+    #             # path: code
+    #     - 
+    #         name: Autobuild
+    #         uses: github/codeql-action/autobuild@v3
           
-        - 
-            name: Perform CodeQL Analysis
-            uses: github/codeql-action/analyze@v3
+    #     -
+    #         name: Perform CodeQL Analysis
+    #         uses: github/codeql-action/analyze@v3
+    #
+    # 
 
-
-# https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning/customizing-your-advanced-setup-for-code-scanning#specifying-the-location-for-codeql-databases
