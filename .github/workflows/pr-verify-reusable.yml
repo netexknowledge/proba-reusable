@@ -12,16 +12,14 @@ on:
         # secrets:
         #     envPAT:
         #         required: true
-
+permissions: #write-all
+    contents: read
+    packages: read
+    # # To report GitHub Actions status checks
+    statuses: write
 jobs:
     code-lint:
         runs-on: netex-platform-ubuntu-latest
-        permissions: #write-all
-          contents: read
-          packages: read
-          # # To report GitHub Actions status checks
-          statuses: write
-
         steps:
             - 
                 name: Checkout code
@@ -230,7 +228,6 @@ jobs:
                     YAML_CONFIG_FILE: ${{ env.YAML_CONFIG_FILE }}
                     YAML_ERROR_ON_WARNING: ${{ env.YAML_ERROR_ON_WARNING }}
 
-
     commitlint: # https://commitlint.js.org/guides/ci-setup.html
         runs-on: netex-platform-ubuntu-latest
         steps:
@@ -279,6 +276,7 @@ jobs:
     teams:
         runs-on: netex-platform-ubuntu-latest
         needs: [ commitlint,code-lint ]
+        if: always()
         steps:
         -
             name: Set variables
@@ -358,3 +356,21 @@ jobs:
                 /n
                 \"
                 }" $TEAMS_WEBHOOK_URL
+
+    scan:
+        runs-on: netex-platform-ubuntu-latest
+        steps:
+        - 
+            name: Checkout code
+            uses: actions/checkout@v4
+            with:
+                fetch-depth: 0
+        - 
+            uses: github/codeql-action/init@v3
+            with:
+                db-location: '${{ github.runner_temp }}/${{ github.event_name }}'
+                path: code
+
+
+
+# https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning/customizing-your-advanced-setup-for-code-scanning#specifying-the-location-for-codeql-databases
