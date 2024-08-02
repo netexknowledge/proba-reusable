@@ -331,7 +331,13 @@ jobs:
             with:
                 db-location: '/tmp/${{ github.event_name }}'
                 # path: code
-
+        - 
+            name: Autobuild
+            uses: github/codeql-action/autobuild@v3
+          
+        - 
+            name: Perform CodeQL Analysis
+            uses: github/codeql-action/analyze@v3
 
 
 # https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning/customizing-your-advanced-setup-for-code-scanning#specifying-the-location-for-codeql-databases
